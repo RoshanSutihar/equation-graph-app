@@ -3,6 +3,7 @@ package com.example.equationgrapher
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,17 +27,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-
 @Composable
 fun GraphingApp(innerPadding: PaddingValues) {
     var equation by remember { mutableStateOf("") }
     var equations by remember { mutableStateOf(listOf<String>()) }
-    var zoomLevel by remember { mutableStateOf(1f) }
+    var zoomLevel by remember { mutableStateOf(1f) } // Set initial zoom level to 1f
+
+    var xOffset by remember { mutableStateOf(0f) }
+    var yOffset by remember { mutableStateOf(0f) }
 
     Row(
         modifier = Modifier
@@ -49,8 +55,21 @@ fun GraphingApp(innerPadding: PaddingValues) {
                 .weight(2f)
                 .fillMaxHeight()
                 .clipToBounds()
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        xOffset += dragAmount.x
+                        yOffset += dragAmount.y
+                        change.consume()
+                    }
+                }
         ) {
-            GraphCanvas(equations, Modifier.fillMaxSize(), zoomLevel)
+            GraphCanvas(
+                equations = equations,
+                modifier = Modifier.fillMaxSize(),
+                zoomLevel = zoomLevel,
+                xOffset = xOffset,
+                yOffset = yOffset
+            )
         }
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -113,9 +132,12 @@ fun GraphingApp(innerPadding: PaddingValues) {
             Text("Zoom")
             Slider(
                 value = zoomLevel,
-                onValueChange = { zoomLevel = it },
-                valueRange = 0.5f..2f,
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    // Prevent zooming out below 1f
+                    zoomLevel = it.coerceIn(1f, 2f)
+                },
+                valueRange = 1f..2f, // Set the zoom range to start at 1f and go up to 2f
+                modifier = Modifier.fillMaxWidth() // Ensure slider stretches horizontally
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -129,9 +151,32 @@ fun GraphingApp(innerPadding: PaddingValues) {
         }
     }
 }
+
 @Composable
-fun GraphCanvas(equations: List<String>, modifier: Modifier = Modifier, zoomLevel: Float) {
+fun GraphCanvas(
+    equations: List<String>,
+    modifier: Modifier = Modifier,
+    zoomLevel: Float,
+    xOffset: Float,
+    yOffset: Float
+) {
     Canvas(modifier = modifier) {
-        drawGraph(equations, zoomLevel)
+
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+
+
+        val constrainedXOffset = constrainOffset(xOffset, zoomLevel, canvasWidth, true)
+        val constrainedYOffset = constrainOffset(yOffset, zoomLevel, canvasHeight, false)
+
+
+        translate(left = constrainedXOffset, top = constrainedYOffset) {
+            scale(zoomLevel, zoomLevel, pivot = Offset(canvasWidth / 2, canvasHeight / 2)) {
+                drawGraph(equations, zoomLevel, constrainedXOffset, constrainedYOffset)
+            }
+        }
     }
 }
+
+
+
