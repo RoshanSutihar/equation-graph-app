@@ -35,11 +35,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 @Composable
 fun GraphingApp(innerPadding: PaddingValues) {
     var equation by remember { mutableStateOf("") }
     var equations by remember { mutableStateOf(listOf<String>()) }
-    var zoomLevel by remember { mutableStateOf(1f) } // Set initial zoom level to 1f
+    var zoomLevel by remember { mutableStateOf(1.2f) }
 
     var xOffset by remember { mutableStateOf(0f) }
     var yOffset by remember { mutableStateOf(0f) }
@@ -79,6 +80,14 @@ fun GraphingApp(innerPadding: PaddingValues) {
                 .weight(1f)
                 .padding(8.dp)
         ) {
+            Text(
+                text = "Note: Write eqn as it is. Do not include * sign to multiply variabe and integer. Write '3x' not '3*x'.",
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(16.dp)
+            )
+
+
             TextField(
                 value = equation,
                 onValueChange = { equation = it },
@@ -133,11 +142,11 @@ fun GraphingApp(innerPadding: PaddingValues) {
             Slider(
                 value = zoomLevel,
                 onValueChange = {
-                    // Prevent zooming out below 1f
+
                     zoomLevel = it.coerceIn(1f, 2f)
                 },
-                valueRange = 1f..2f, // Set the zoom range to start at 1f and go up to 2f
-                modifier = Modifier.fillMaxWidth() // Ensure slider stretches horizontally
+                valueRange = 1f..1.5f,
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))

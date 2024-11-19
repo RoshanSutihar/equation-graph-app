@@ -92,36 +92,56 @@ fun DrawScope.drawAxisLabels(
         textAlign = android.graphics.Paint.Align.CENTER
     }
 
-    // Calculate the visible X range based on offset and zoom
-    val visibleXStart = ((-centerX + xOffset) / scaleX).toInt() - 1
-    val visibleXEnd = ((canvasWidth - centerX + xOffset) / scaleX).toInt() + 1
+    val tickLength = 10f
+    val visibleXStart = ((-centerX + xOffset) / scaleX).toInt() - 2
+    val visibleXEnd = ((canvasWidth - centerX + xOffset) / scaleX).toInt() + 2
 
-    // Draw X-axis labels
+    val visibleYStart = ((-centerY + yOffset) / scaleY).toInt() - 2
+    val visibleYEnd = ((canvasHeight - centerY + yOffset) / scaleY).toInt() + 2
+
+
     for (i in visibleXStart..visibleXEnd) {
         val x = centerX + i * scaleX
-        drawContext.canvas.nativeCanvas.drawText(
-            i.toString(),
-            x,
-            centerY + 40f, // Adjusted for better placement
-            paint
-        )
+        if (x in 0f..canvasWidth && !(i == 0 && centerY in 0f..canvasHeight)) {
+            // Draw the label
+            drawContext.canvas.nativeCanvas.drawText(
+                i.toString(),
+                x,
+                centerY + 40f,
+                paint
+            )
+
+            drawLine(
+                color = Color.Black,
+                start = Offset(x, centerY - tickLength / 2),
+                end = Offset(x, centerY + tickLength / 2),
+                strokeWidth = 2f
+            )
+        }
     }
 
-    // Calculate the visible Y range based on offset and zoom
-    val visibleYStart = ((-centerY + yOffset) / scaleY).toInt() - 1
-    val visibleYEnd = ((canvasHeight - centerY + yOffset) / scaleY).toInt() + 1
 
-    // Draw Y-axis labels
     for (i in visibleYStart..visibleYEnd) {
         val y = centerY - i * scaleY
-        drawContext.canvas.nativeCanvas.drawText(
-            i.toString(),
-            centerX + 40f,
-            y,
-            paint
-        )
+        if (y in 0f..canvasHeight && !(i == 0 && centerX in 0f..canvasWidth)) {
+
+            drawContext.canvas.nativeCanvas.drawText(
+                i.toString(),
+                centerX + 40f,
+                y,
+                paint
+            )
+
+            drawLine(
+                color = Color.Black,
+                start = Offset(centerX - tickLength / 2, y),
+                end = Offset(centerX + tickLength / 2, y),
+                strokeWidth = 2f
+            )
+        }
     }
 }
+
 
 fun createGraphPath(equation: String, scaleX: Float, scaleY: Float, centerX: Float, centerY: Float): Path {
     val path = Path()
